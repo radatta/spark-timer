@@ -1,12 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { DiscoverScreen } from '@/components/discover-screen'
 import { MatchModal } from '@/components/match-modal'
 import { MatchesScreen } from '@/components/matches-screen'
 import { ChatScreen } from '@/components/chat-screen'
 import { BottomNav, type Tab } from '@/components/bottom-nav'
-import { type Match, createInitialMatches } from '@/lib/data'
+import {
+  type Match,
+  createInitialMatches,
+  DANGER_THRESHOLD_MS,
+  WARNING_THRESHOLD_MS,
+  EXTEND_BONUS_MS,
+} from '@/lib/data'
 import { toast } from 'sonner'
 
 const STORAGE_KEY = 'sparktimer_matches_v2'
@@ -37,6 +43,10 @@ export default function Home() {
   const [pendingMatch, setPendingMatch] = useState<Match | null>(null)
   const [now, setNow] = useState(() => Date.now())
 
+  // Per-session toast tracking so we don't spam
+  const expiredToasted = useRef<Set<string>>(new Set())
+  const aboutToExpireToasted = useRef<Set<string>>(new Set())
+
   // Tick every second for timers
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
@@ -48,21 +58,62 @@ export default function Home() {
     setMatches(loadMatches())
   }, [])
 
-  // Auto-expire matches
+  // Sync across tabs via storage events
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return
+      try {
+        const incoming = JSON.parse(e.newValue) as Match[]
+        setMatches(incoming)
+      } catch {
+        // ignore malformed payloads
+      }
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  // Auto-expire & status transitions, with toasts
   useEffect(() => {
     setMatches((prev) => {
       let changed = false
       const updated = prev.map((m) => {
-        if (m.status !== 'expired' && m.status !== 'messaged' && now > m.timerExpiresAt) {
+        const msLeft = m.timerExpiresAt - now
+
+        // Just expired
+        if (m.status !== 'expired' && m.status !== 'messaged' && msLeft <= 0) {
           changed = true
+          if (!expiredToasted.current.has(m.id)) {
+            expiredToasted.current.add(m.id)
+            toast.error(`Match with ${m.profile.name} expired`, {
+              description: 'No message was sent in time. The spark is gone.',
+            })
+          }
           return { ...m, status: 'expired' as const }
         }
-        if (m.status === 'active' && m.timerExpiresAt - now < 6 * 60 * 60 * 1000) {
+
+        // About-to-expire warning (under 1h, first time we see it this session)
+        if (
+          (m.status === 'active' || m.status === 'expiring') &&
+          msLeft > 0 &&
+          msLeft < DANGER_THRESHOLD_MS &&
+          !aboutToExpireToasted.current.has(m.id)
+        ) {
+          aboutToExpireToasted.current.add(m.id)
+          toast(`⏰ ${m.profile.name} expires in under an hour!`, {
+            description: 'Send a message now or extend the match.',
+          })
+        }
+
+        // Promote 'active' → 'expiring' once we cross the 6h mark
+        if (m.status === 'active' && msLeft < WARNING_THRESHOLD_MS && msLeft > 0) {
           changed = true
           return { ...m, status: 'expiring' as const }
         }
+
         return m
       })
+
       if (changed) {
         saveMatches(updated)
         return updated
@@ -123,6 +174,25 @@ export default function Home() {
     toast('Message sent!', { description: 'The timer has been removed for this match.' })
   }, [])
 
+  const handleExtendMatch = useCallback((matchId: string) => {
+    setMatches((prev) => {
+      const updated = prev.map((m) => {
+        if (m.id !== matchId || m.extended || m.status === 'expired' || m.status === 'messaged') {
+          return m
+        }
+        const newExpiresAt = m.timerExpiresAt + EXTEND_BONUS_MS
+        const msLeft = newExpiresAt - Date.now()
+        const newStatus: Match['status'] = msLeft >= WARNING_THRESHOLD_MS ? 'active' : 'expiring'
+        return { ...m, timerExpiresAt: newExpiresAt, extended: true, status: newStatus }
+      })
+      saveMatches(updated)
+      return updated
+    })
+    // Reset the "about to expire" guard so a re-warn can fire later if it dips again
+    aboutToExpireToasted.current.delete(matchId)
+    toast.success('Match extended +12h', { description: 'You bought yourself some time.' })
+  }, [])
+
   const handleTabChange = useCallback((tab: Tab) => {
     setActiveTab(tab)
     if (tab !== 'chat') setActiveChatId(null)
@@ -153,7 +223,12 @@ export default function Home() {
 
         {activeTab === 'matches' && (
           <div className="absolute inset-0">
-            <MatchesScreen matches={matches} now={now} onOpenChat={handleOpenChat} />
+            <MatchesScreen
+              matches={matches}
+              now={now}
+              onOpenChat={handleOpenChat}
+              onExtendMatch={handleExtendMatch}
+            />
           </div>
         )}
 
@@ -167,11 +242,17 @@ export default function Home() {
                 setActiveTab('matches')
               }}
               onSendMessage={handleSendMessage}
+              onExtendMatch={handleExtendMatch}
             />
           </div>
         ) : activeTab === 'chat' ? (
           <div className="absolute inset-0">
-            <MatchesScreen matches={matches} now={now} onOpenChat={handleOpenChat} />
+            <MatchesScreen
+              matches={matches}
+              now={now}
+              onOpenChat={handleOpenChat}
+              onExtendMatch={handleExtendMatch}
+            />
           </div>
         ) : null}
       </div>

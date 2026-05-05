@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect } from 'react'
 import type { Match, Message } from '@/lib/data'
 import { formatTimeLeft, getTimerStatus } from '@/lib/data'
-import { ArrowLeft, Send, Timer } from 'lucide-react'
+import { ArrowLeft, Send, Timer, Plus } from 'lucide-react'
 
 type Props = {
   match: Match
   now: number
   onBack: () => void
   onSendMessage: (matchId: string, text: string) => void
+  onExtendMatch: (matchId: string) => void
 }
 
 const BOT_REPLIES = [
@@ -25,7 +26,7 @@ const BOT_REPLIES = [
 
 let botReplyIndex = 0
 
-export function ChatScreen({ match, now, onBack, onSendMessage }: Props) {
+export function ChatScreen({ match, now, onBack, onSendMessage, onExtendMatch }: Props) {
   const [input, setInput] = useState('')
   const [localMessages, setLocalMessages] = useState<Message[]>(match.messages)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -145,9 +146,26 @@ export function ChatScreen({ match, now, onBack, onSendMessage }: Props) {
           }}
         >
           <Timer className="w-3.5 h-3.5 flex-shrink-0" />
-          {timerStatus === 'danger'
-            ? `Hurry! This match expires in ${formatTimeLeft(msLeft)}. Send a message now!`
-            : `This match expires in ${formatTimeLeft(msLeft)}. Say hello to keep the spark alive!`}
+          <span className="flex-1 min-w-0 truncate">
+            {timerStatus === 'danger'
+              ? `Hurry! Expires in ${formatTimeLeft(msLeft)}. Send a message now!`
+              : `Expires in ${formatTimeLeft(msLeft)}. Say hello to keep the spark alive!`}
+          </span>
+          {!match.extended && (timerStatus === 'danger' || timerStatus === 'warning') && (
+            <button
+              onClick={() => onExtendMatch(match.id)}
+              className="flex items-center gap-1 px-2 py-1 rounded-full font-bold transition-transform active:scale-95"
+              style={{
+                background: 'var(--spark-purple)',
+                color: 'white',
+                fontSize: '11px',
+              }}
+              aria-label="Extend match by 12 hours"
+            >
+              <Plus className="w-3 h-3" />
+              +12h
+            </button>
+          )}
         </div>
       )}
 
@@ -220,7 +238,7 @@ export function ChatScreen({ match, now, onBack, onSendMessage }: Props) {
           onKeyDown={handleKeyDown}
           placeholder={`Message ${match.profile.name}...`}
           className="flex-1 bg-secondary rounded-2xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 transition-all"
-          style={{ ringColor: 'var(--spark-pink)' }}
+          style={{ outlineColor: 'var(--spark-pink)' }}
           aria-label="Message input"
         />
         <button

@@ -6,6 +6,7 @@ export type Profile = {
   bio: string
   interests: string[]
   image: string
+  compatibility: number // 0-100
 }
 
 export type MatchStatus = 'active' | 'expiring' | 'expired' | 'messaged'
@@ -18,6 +19,7 @@ export type Match = {
   status: MatchStatus
   messages: Message[]
   lastMessage?: string
+  extended?: boolean
 }
 
 export type Message = {
@@ -36,6 +38,7 @@ export const PROFILES: Profile[] = [
     bio: 'Coffee addict, weekend hiker, and terrible at cooking. Looking for someone to eat takeout with.',
     interests: ['Hiking', 'Coffee', 'Photography', 'Travel'],
     image: 'https://picsum.photos/seed/sophia/600/800',
+    compatibility: 92,
   },
   {
     id: 'p2',
@@ -45,6 +48,7 @@ export const PROFILES: Profile[] = [
     bio: 'Art museum enthusiast by day, thriller novel reader by night. Dogs are mandatory.',
     interests: ['Art', 'Reading', 'Dogs', 'Yoga'],
     image: 'https://picsum.photos/seed/elena/600/800',
+    compatibility: 87,
   },
   {
     id: 'p3',
@@ -54,6 +58,7 @@ export const PROFILES: Profile[] = [
     bio: 'Startup founder who still watches reality TV. Living for the contradictions.',
     interests: ['Startups', 'Cooking', 'Reality TV', 'Gym'],
     image: 'https://picsum.photos/seed/maya/600/800',
+    compatibility: 78,
   },
   {
     id: 'p4',
@@ -63,6 +68,7 @@ export const PROFILES: Profile[] = [
     bio: 'Architect. I design buildings and also overdesign my Spotify playlists.',
     interests: ['Architecture', 'Music', 'Wine', 'Design'],
     image: 'https://picsum.photos/seed/isabelle/600/800',
+    compatibility: 84,
   },
   {
     id: 'p5',
@@ -72,6 +78,7 @@ export const PROFILES: Profile[] = [
     bio: 'Marine biologist. Yes, I have swum with sharks. No, I am not scared.',
     interests: ['Ocean', 'Diving', 'Science', 'Running'],
     image: 'https://picsum.photos/seed/zoe/600/800',
+    compatibility: 71,
   },
   {
     id: 'p6',
@@ -81,6 +88,7 @@ export const PROFILES: Profile[] = [
     bio: 'Freelance photographer. I will make you look good in every photo.',
     interests: ['Photography', 'Travel', 'Concerts', 'Foodie'],
     image: 'https://picsum.photos/seed/natasha/600/800',
+    compatibility: 65,
   },
   {
     id: 'p7',
@@ -90,6 +98,7 @@ export const PROFILES: Profile[] = [
     bio: 'Studying neuroscience. Loves puzzles, escape rooms, and oat milk lattes.',
     interests: ['Science', 'Puzzles', 'Yoga', 'Cats'],
     image: 'https://picsum.photos/seed/aria/600/800',
+    compatibility: 89,
   },
   {
     id: 'p8',
@@ -99,6 +108,7 @@ export const PROFILES: Profile[] = [
     bio: 'Chef by trade, climber by weekend. Will feed you very well.',
     interests: ['Cooking', 'Climbing', 'Hiking', 'Wine'],
     image: 'https://picsum.photos/seed/luna/600/800',
+    compatibility: 95,
   },
   {
     id: 'p9',
@@ -108,6 +118,7 @@ export const PROFILES: Profile[] = [
     bio: 'Journalist. I ask a lot of questions — hopefully you do too.',
     interests: ['Writing', 'Travel', 'Politics', 'Jazz'],
     image: 'https://picsum.photos/seed/camille/600/800',
+    compatibility: 73,
   },
   {
     id: 'p10',
@@ -117,6 +128,7 @@ export const PROFILES: Profile[] = [
     bio: 'Software engineer. I debug code and also my own life. Slowly.',
     interests: ['Tech', 'Gaming', 'Coffee', 'Cycling'],
     image: 'https://picsum.photos/seed/jade/600/800',
+    compatibility: 81,
   },
 ]
 
@@ -203,9 +215,13 @@ export function formatTimeLeft(ms: number): string {
   return m > 0 ? `${h}h ${m}m left` : `${h}h left`
 }
 
+export const DANGER_THRESHOLD_MS = 60 * 60 * 1000 // 1 hour
+export const WARNING_THRESHOLD_MS = 6 * 60 * 60 * 1000 // 6 hours
+export const EXTEND_BONUS_MS = 12 * 60 * 60 * 1000 // 12 hours
+
 export function getTimerStatus(msLeft: number): 'safe' | 'warning' | 'danger' | 'expired' {
   if (msLeft <= 0) return 'expired'
-  if (msLeft < 2 * 60 * 60 * 1000) return 'danger'
-  if (msLeft < 6 * 60 * 60 * 1000) return 'warning'
+  if (msLeft < DANGER_THRESHOLD_MS) return 'danger'
+  if (msLeft < WARNING_THRESHOLD_MS) return 'warning'
   return 'safe'
 }

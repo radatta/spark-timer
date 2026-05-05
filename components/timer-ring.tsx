@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { formatCountdown } from '@/lib/data'
+import { formatCountdown, DANGER_THRESHOLD_MS, WARNING_THRESHOLD_MS } from '@/lib/data'
 
 type Props = {
   msLeft: number
@@ -17,8 +17,8 @@ export function TimerRing({ msLeft, totalMs, size = 160, strokeWidth = 8, label 
   const progress = totalMs > 0 ? Math.max(0, msLeft / totalMs) : 0
   const dashOffset = circumference * (1 - progress)
 
-  const isDanger = msLeft < 2 * 60 * 60 * 1000
-  const isWarning = msLeft < 6 * 60 * 60 * 1000
+  const isDanger = msLeft < DANGER_THRESHOLD_MS
+  const isWarning = msLeft < WARNING_THRESHOLD_MS
 
   const strokeColor = useMemo(() => {
     if (isDanger) return 'var(--spark-danger)'

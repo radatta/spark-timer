@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { MapPin, Zap } from 'lucide-react'
 import { SwipeCard } from './swipe-card'
-import { PROFILES, type Match, type Profile, createInitialMatches } from '@/lib/data'
+import { PROFILES, type Match, type Profile } from '@/lib/data'
 import { toast } from 'sonner'
 
 type Props = {
@@ -77,7 +77,10 @@ export function DiscoverScreen({ onMatch }: Props) {
           </span>
         </div>
 
-        <div className="w-9 h-9 rounded-full overflow-hidden ring-2" style={{ ringColor: 'var(--spark-pink)' }}>
+        <div
+          className="w-9 h-9 rounded-full overflow-hidden ring-2"
+          style={{ outlineColor: 'var(--spark-pink)' }}
+        >
           <img
             src="https://picsum.photos/seed/myprofile/100/100"
             alt="Your profile"

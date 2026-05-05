@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(bun --version)"
+      "Bash(bun --version)",
+      "Bash(bun run *)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /tmp/spark-page.html -w \"HTTP %{http_code}\\\\nTime %{time_total}s\\\\nSize %{size_download}\\\\n\" http://localhost:3000/)",
+      "Read(//private/tmp/**)",
+      "Bash(bunx tsc *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(kill 25050)"
     ]
   }
 }

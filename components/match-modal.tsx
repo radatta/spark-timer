@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
 import { TimerRing } from './timer-ring'
 import type { Match } from '@/lib/data'
-import { X } from 'lucide-react'
+import { X, Sparkles } from 'lucide-react'
 
 type Props = {
   match: Match
@@ -84,10 +84,10 @@ export function MatchModal({ match, onSendMessage, onKeepSwiping, onClose }: Pro
       </div>
 
       {/* Photos */}
-      <div className="flex items-center justify-center mb-10 relative">
+      <div className="flex items-center justify-center mb-4 relative">
         <div
           className="w-28 h-28 rounded-full overflow-hidden ring-4 z-10 -mr-5"
-          style={{ ringColor: 'var(--spark-neon-pink)', boxShadow: '0 0 0 4px var(--spark-neon-pink)' }}
+          style={{ boxShadow: '0 0 0 4px var(--spark-neon-pink)' }}
         >
           <img
             src="https://picsum.photos/seed/myprofile/200/200"
@@ -105,6 +105,21 @@ export function MatchModal({ match, onSendMessage, onKeepSwiping, onClose }: Pro
             className="w-full h-full object-cover"
           />
         </div>
+      </div>
+
+      {/* Compatibility */}
+      <div
+        className="flex items-center gap-2 px-4 py-1.5 rounded-full mb-8"
+        style={{
+          background: 'oklch(from var(--spark-cyan) l c h / 0.12)',
+          border: '1px solid var(--spark-cyan)',
+        }}
+        aria-label={`${match.profile.compatibility} percent compatible`}
+      >
+        <Sparkles className="w-4 h-4" style={{ color: 'var(--spark-cyan)' }} aria-hidden="true" />
+        <span className="text-sm font-bold" style={{ color: 'var(--spark-cyan)' }}>
+          {match.profile.compatibility}% compatibility
+        </span>
       </div>
 
       {/* Timer */}

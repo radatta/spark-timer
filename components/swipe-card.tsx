@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from 'react'
 import type { Profile } from '@/lib/data'
-import { MapPin } from 'lucide-react'
+import { MapPin, Sparkles } from 'lucide-react'
 
 type Props = {
   profile: Profile
@@ -117,6 +117,21 @@ export function SwipeCard({ profile, onSwipeLeft, onSwipeRight, isTop, stackInde
               'linear-gradient(to bottom, transparent 45%, oklch(0 0 0 / 0.3) 65%, oklch(0 0 0 / 0.85) 100%)',
           }}
         />
+
+        {/* Compatibility pill */}
+        <div
+          className="absolute top-4 right-4 flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold pointer-events-none"
+          style={{
+            background: 'oklch(0 0 0 / 0.45)',
+            backdropFilter: 'blur(10px)',
+            color: 'white',
+            border: '1px solid oklch(1 0 0 / 0.18)',
+          }}
+          aria-label={`${profile.compatibility} percent compatible`}
+        >
+          <Sparkles className="w-3 h-3" style={{ color: 'var(--spark-cyan)' }} aria-hidden="true" />
+          {profile.compatibility}% match
+        </div>
 
         {/* LIKE indicator */}
         <div
