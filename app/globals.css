@@ -141,4 +141,28 @@
     stroke: var(--spark-danger);
     filter: drop-shadow(0 0 6px oklch(0.62 0.25 30 / 0.6));
   }
+
+  .swipe-hint {
+    animation: swipe-hint-fade 0.4s ease-out, swipe-hint-pulse 2.4s ease-in-out 0.4s infinite;
+  }
+
+  @keyframes swipe-hint-fade {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes swipe-hint-pulse {
+    0%, 100% {
+      opacity: 0.85;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }

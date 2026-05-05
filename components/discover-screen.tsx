@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { MapPin, Zap } from 'lucide-react'
 import { SwipeCard } from './swipe-card'
 import { PROFILES, type Match, type Profile } from '@/lib/data'
@@ -11,13 +11,34 @@ type Props = {
 }
 
 const CARD_POOL = PROFILES.slice(0, 10)
+const SWIPE_HINT_KEY = 'sparktimer_swipe_hint_seen'
 
 export function DiscoverScreen({ onMatch }: Props) {
   const [stack, setStack] = useState<Profile[]>(CARD_POOL)
   const [gone, setGone] = useState<Set<string>>(new Set())
+  const [showHint, setShowHint] = useState(false)
+
+  // Show hint once per browser, on first visit
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(SWIPE_HINT_KEY)) setShowHint(true)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const dismissHint = useCallback(() => {
+    setShowHint(false)
+    try {
+      localStorage.setItem(SWIPE_HINT_KEY, '1')
+    } catch {
+      // ignore
+    }
+  }, [])
 
   const handleSwipe = useCallback(
     (profile: Profile, direction: 'left' | 'right') => {
+      dismissHint()
       setGone((prev) => new Set([...prev, profile.id]))
       setTimeout(() => {
         setStack((prev) => prev.filter((p) => p.id !== profile.id))
@@ -44,7 +65,7 @@ export function DiscoverScreen({ onMatch }: Props) {
         }
       }
     },
-    [onMatch]
+    [onMatch, dismissHint]
   )
 
   const handleSwipeLeft = useCallback(
@@ -118,6 +139,26 @@ export function DiscoverScreen({ onMatch }: Props) {
             })
         )}
       </div>
+
+      {/* First-visit swipe hint */}
+      {showHint && topProfile && (
+        <button
+          onClick={dismissHint}
+          className="swipe-hint mx-auto mb-1 mt-1 flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-medium flex-shrink-0"
+          style={{
+            background: 'oklch(0.15 0.02 270 / 0.7)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid oklch(1 0 0 / 0.1)',
+            color: 'oklch(0.8 0.01 270)',
+          }}
+          aria-label="Dismiss swipe hint"
+        >
+          <span style={{ color: 'var(--spark-danger)' }}>←</span>
+          <span>swipe or tap to choose</span>
+          <span style={{ color: 'var(--spark-neon-pink)' }}>→</span>
+        </button>
+      )}
 
       {/* Action Buttons */}
       {topProfile && (
